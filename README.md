@@ -20,4 +20,4 @@ This will create NMR records for all mnova files present in the folder when the 
 
 Upadte on version:
 
-Version 1.1 introduced a backslash before the end-of-line character inside tags. (see [here](http://nmredata.org/wiki/NMReDATA_tag_format#.3CNMREDATA_VERSION.3E)
+Version 1.1 [introduced a backslash before the end-of-line character](http://nmredata.org/wiki/NMReDATA_tag_format#.3CNMREDATA_VERSION.3E) inside tags.

@@ -19,11 +19,6 @@ function assignmentReport() {
     addNumberOfNuclides, addMultiplicity, parameters, correlationsTableStart, assignmentsArray, format,
     lines = 25,
     dw = Application.mainWindow.activeDocument,
-    ///////////////
-    version_nmredata=1.1,//
-    ///////////////
-    end_of_line,
-
     clipBoardKey = "Correlation Reporter/ClipBoard",
     correlations2DKey  = "Correlation Reporter/2D Correlations",
     orderKey = "Correlation Reporter/Order by shift",
@@ -60,7 +55,59 @@ function assignmentReport() {
         return undefined;
     }
     
-  
+    function createHTMLReport(table, index, lines) {
+        
+        var i, j, output;
+        
+        function fillVoids(cell) {
+            if (cell === undefined || cell === "") {
+                return "-";
+            }
+            return cell;
+        }
+        
+        
+        output = "<font style=\"font-size: 8pt; font-family: Arial; color: black\">";
+        output += "<html><head>";
+        output += "<title>Correlations Table</title>";
+        output += "</head><body>";
+        output += '\n<table border="1" cellSpacing="0" cellPadding="4" width="100%">';
+        output += '\n<tr style="background-color:silver">';
+        
+        
+        for (i = 0; i < table[0].length; i++) {
+            output += '<td><b>' + table[0][i] + '</b></td>';
+        }
+        output += '</tr>';
+        
+        if (index === undefined) {
+            for (i =  1; i < table.length; i++) {
+                output += '<tr>';
+                for (j = 0; j < table[i].length; j++) {
+                    output += '<td>' + fillVoids(table[i][j]) + '</td>';
+                }
+                output += '</tr>';
+            }
+        } else {
+            
+            if (index !== 0) {
+                index = index * lines;
+            }
+            
+            for (i = index + 1; (i < table.length && (i <= (index + lines))); i++) {
+                output += '<tr>';
+                for (j = 0; j < table[i].length; j++) {
+                    output += '<td>' + fillVoids(table[i][j]) + '</td>';
+                }
+                output += '</tr>';
+            }
+        }
+        output += '</table>';
+        output += '</body></html>';
+        
+        return output;
+    }
+    
     
     
     function exportToFile(aFormat) {
@@ -72,7 +119,52 @@ function assignmentReport() {
             header = header.replace(re, '');
             return header;
         }
-       
+        
+        //   var i, file, stream, dataFile;
+        
+        //		if (aFormat) {
+        //			dataFile = FileDialog.getSaveFileName("*.txt", "Save report in .sdf", settings.value(reportTxtFileKey, Dir.home()));
+        //   dataFile = Dir.home() + "/Mnova_table_of_correlations.sdf.txt";
+        //		} else {
+        //			dataFile = FileDialog.getSaveFileName("*.html", "Save report in HTML format", settings.value(reportHTMLFileKey, Dir.home()));
+        //		}
+        
+        /*    if (dataFile !== "") {
+         
+         file = new File(dataFile);
+         
+         //			if (aFormat) {
+         settings.setValue(reportTxtFileKey, dataFile);
+         //			} else {
+         //				settings.setValue(reportHTMLFileKey, dataFile);
+         //			}
+         */
+        /*        file.open(File.WriteOnly);
+         stream = new TextStream(file);
+         out_mol = mol.getMolfile();
+         stream.writeln(out_mol);
+         stream.writeln(">  <Mestre_correlation_table>");
+         
+         //			if (aFormat) {
+         for (i = 0; i < table.length; i++) {
+         ////				for (i = 1; i < table.length; i++) {
+         if (i === 0) {
+         stream.writeln(formatHeader(table[i].join("\t")));
+         } else {
+         stream.writeln(table[i].join("\t"));
+         }
+         stream.flush();
+         }
+         //			} else {
+         //				tableText = createHTMLReport(table);
+         //				stream.write(tableText);
+         //				stream.flush();
+         //			}
+         stream.writeln("");
+         stream.writeln("");
+         stream.flush();
+         file.close();
+         }*/
     }
     
     
@@ -118,11 +210,7 @@ function assignmentReport() {
         return headerArray;
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (version_nmredata>1.0) {
-        end_of_line = "\\\n";
-    } else {
-            end_of_line = "\n";
-    }
+    
     if (dw === undefined || Application.molecule === undefined) {
         return;
     }
@@ -183,7 +271,7 @@ function assignmentReport() {
                             // 	     	dataFile = FileDialog.getSaveFileName("*.txt", "Save report in .sdf", settings.value(reportTxtFileKey, Dir.home()));
                             parameters = {};
                             parameters.name_compound = "compound" + (compound_number+1);
-                            parameters.version_nmredata=version_nmredata;
+                            
                             
                             // removed because not good if more than one manova file for the same dataset
                             /*  spectra = dw.itemCount("NMR Spectrum");
@@ -264,19 +352,17 @@ function assignmentReport() {
                             stream.write(out_mol);// bug reported by JMN Nov 9 replaced writeln with write to have one less end-of-line char in the file
                             
                             // output some comments
-                            stream.writeln(">  <NMREDATA_VERSION>\n" + version_nmredata + end_of_line );
-
                             if (debug){
                                 stream.writeln(">  <COMMENT_TO_DEL> ");
                                 //stream.writeln(path_elements[path_elements.length-5]);
-                                stream.write(";comments on the mol... "  + end_of_line);
-                                stream.write(";comments on the mol... " + end_of_line);
+                                stream.writeln(";comments on the mol... ");
+                                stream.writeln(";comments on the mol... ");
                                 
-                                stream.write(";molName :" + mol.molName + end_of_line);
+                                stream.writeln(";molName :" + mol.molName);
                                 
-                                stream.write(";label :" + mol.label + end_of_line);
-                                stream.write(";Description :" + mol.Description + end_of_line);
-                                stream.write(";molecularFormula :" + mol.molecularFormula() + end_of_line);
+                                stream.writeln(";label :" + mol.label);
+                                stream.writeln(";Description :" + mol.Description);
+                                stream.writeln(";molecularFormula :" + mol.molecularFormula());
                                 stream.writeln("");
                             }
                             ////////////////////////////////////////////////////
@@ -292,14 +378,14 @@ function assignmentReport() {
                             while ( specIndex < spectra && found_it) {//to list all
                                 spectrum = new NMRSpectrum(dw.item(specIndex, "NMR Spectrum"));
                                 
-                                stream.writeln(">  <NMREDATA_SOLVENT>\n" + spectrum.solvent +  end_of_line);
+                                stream.writeln(">  <NMREDATA_SOLVENT>\n" + spectrum.solvent + "\n");
                                 
                                 found_it=0;
                                 
                                 specIndex++;
                                 
                             }
-                            stream.writeln(">  <NMREDATA_LEVEL>\n" + nmredata_level  + end_of_line);
+                            stream.writeln(">  <NMREDATA_LEVEL>\n" + nmredata_level + "\n");
                             
                             
                             ////////////////////////////////////////////////////
@@ -318,7 +404,39 @@ function assignmentReport() {
                             stream.writeln(">  <NMREDATA_ASSIGNMENT>");
                             stream.flush();
                             
-                           
+                            /*
+                             diag = Application.loadUiFile("ricares:assignmentReport.ui");
+                             
+                             diag.widgets.gb2DCorrelations.checked = settings.value(correlations2DKey, true);
+                             diag.widgets.sbDecimalsForProton.value = settings.value(decimalsForProtonKey, 2);
+                             diag.widgets.sbDecimalsForCarbon.value = settings.value(decimalsForCarbonKey, 1);
+                             diag.widgets.ckOrder.checked = settings.value(orderKey, true);
+                             diag.widgets.gbShowDeltaForCarbon.checked = settings.value(showShiftKey, true);
+                             diag.widgets.gbExportToFile.checked = settings.value(exportToFileKey, false);
+                             diag.widgets.rbText.checked = settings.value(exportingFormatKey, true);
+                             diag.widgets.rbHTML.checked = !diag.widgets.rbText.checked;
+                             diag.widgets.ckClipBoard.checked = settings.value(clipBoardKey, true);
+                             diag.widgets.ckIncludeMultiplicity.checked = settings.value(includeMultiplicityKey, false);
+                             diag.widgets.ckAddNumberOfNuclides.checked = settings.value(addNumberOfNuclidesKey, false);
+                             diag.widgets.ckDropLinesWithoutCorrelation.checked = settings.value(dropLinesWithoutCorrelationKey, false);
+                             diag.widgets.ckShowDeltaForCarbon.checked = settings.value(showDeltaForCarbonKey, true);
+                             format =  settings.value(formatKey, 1);
+                             
+                             
+                             if (format === 0) {
+                             diag.widgets.rbN.checked = true;
+                             diag.widgets.rbDeltaN.checked = false;
+                             diag.widgets.rbCnDelta.checked = false;
+                             } else if (format === 1) {
+                             diag.widgets.rbN.checked = false;
+                             diag.widgets.rbDeltaN.checked = true;
+                             diag.widgets.rbCnDelta.checked = false;
+                             } else if (format === 2) {
+                             diag.widgets.rbN.checked = false;
+                             diag.widgets.rbDeltaN.checked = false;
+                             diag.widgets.rbCnDelta.checked = true;
+                             }
+                             */
                             drawnItems = [];
                             
                             //	if (diag.exec()) {
@@ -336,7 +454,13 @@ function assignmentReport() {
                             settings.setValue(dropLinesWithoutCorrelationKey, true);//diag.widgets.ckDropLinesWithoutCorrelation.checked);
                             settings.setValue(showDeltaForCarbonKey, true);//diag.widgets.ckShowDeltaForCarbon.checked);
                             
-                           
+                            /*if (diag.widgets.rbN.checked) {
+                             settings.setValue(formatKey, 0);
+                             } else if (diag.widgets.rbDeltaN.checked) {
+                             settings.setValue(formatKey, 1);
+                             } else if (diag.widgets.rbCnDelta.checked) {
+                             settings.setValue(formatKey, 2);
+                             }*/
                             settings.setValue(formatKey, 0);
                             
                             addNumberOfNuclides = true;//diag.widgets.ckAddNumberOfNuclides.checked;
@@ -373,7 +497,70 @@ function assignmentReport() {
                             //			}
                             
                             correlationsTable = AssignmentReporter.assignmentReportWithCorrelations(parameters);
-                       
+                            //		}
+                            
+                            //		if (diag.widgets.gbShowDeltaForCarbon.checked) {
+           //                 correlationsTableStart++;
+                            //		}
+                            
+           //                 table = AssignmentReporter.getFinalTable(standardTable, correlationsTable);
+                            
+                            
+                            //		if (diag.widgets.ckOrder.checked) {
+           //                 table = AssignmentReporter.getOrderedTable(table);
+                            //		}
+                            
+                            //		if (diag.widgets.ckShowDeltaForCarbon.checked) {
+                            // back//			table = AssignmentReporter.removeVoidAssignmentsRows(table, standardReporter.xNuclidesIndex);
+                            
+                            //		} else {
+          //                  table = AssignmentReporter.removeVoidAssignmentsRows(table, 1);
+                            //		}
+                            
+                            //		if (diag.widgets.ckDropLinesWithoutCorrelation.checked && diag.widgets.gb2DCorrelations.checked) {
+          //                  table = AssignmentReporter.removeVoidCorrelationsRows(table, standardReporter.xNuclidesIndex);
+                            //		}
+                            
+                            //		table = AssignmentReporter.removeVoidColumns(table);
+                            
+                            
+                            //		if (diag.widgets.ckClipBoard.checked) {
+                            //
+                            //			tableText = createHTMLReport(table);
+                            //			pageItem = Application.draw.text(tableText, "Report Special", "Assignments Proton", true);
+                            //			drawnItems.push(pageItem);
+                            //
+                            //			for (i = 1; i < drawnItems.length; i++) {
+                            //				drawnItems[i].top = drawnItems[i - 1].top;
+                            //				drawnItems[i].left = drawnItems[i - 1].right;
+                            //			}
+                            //			settings.setValue(clipBoardKey, true);
+                            //			dw.setSelection(drawnItems);
+                            //			Application.mainWindow.doAction("action_Edit_Copy");
+                            //			Application.mainWindow.activeDocument.curPage().deleteItems(drawnItems);
+                            //			dw.update();
+                            //
+                            //		} else {
+                            //
+                            //			cols = Math.ceil((table.length - 1) / lines);
+                            //			for (i = 0; i < cols; i++) {
+                            //
+                            //				tableText = createHTMLReport(table, i, lines);
+                            //				pageItem = Application.draw.text(tableText, "Report Special", "Assignments Proton", true);
+                            //				drawnItems.push(pageItem);
+                            //			}
+                            //			for (j = 1; j < drawnItems.length; j++) {
+                            ////				drawnItems[j].top = drawnItems[j - 1].top;
+                            //				width = drawnItems[j].width;
+                            //				drawnItems[j].right = drawnItems[j - 1].right + width;
+                            //				drawnItems[j].left = drawnItems[j - 1].right;
+                            //				drawnItems[j].update();
+                            //				dw.update();
+                            //			}
+                            //			settings.setValue(clipBoardKey, false);
+                            //			Application.mainWindow.activeDocument.curPage().update();
+                            //		}
+                            
                             
                             //		if (diag.widgets.gbExportToFile.checked) {
                             exportToFile(true);//exportToFile(diag.widgets.rbText.checked);
@@ -435,9 +622,8 @@ AssignmentReporter.getXNucleus = function (aElement, aAssignmentReporter) {
 
 AssignmentReporter.assignmentReport = function (parameters) {
     'use strict';
-
+    
     var i, j, at, noEqHs, hIndex, atomLabel, atomRow, h, shift, hIsHeavyIndex, skip, shiftH, shiftH0, shiftH1, element, shifts, atomNH,
-    end_of_line,
     aAssignmentObject = parameters.assignmentObject,
     aMolecule = parameters.molecule,
     aAssignmentReporter = parameters.reporter,
@@ -466,11 +652,7 @@ AssignmentReporter.assignmentReport = function (parameters) {
     headerRow = [];
     
     ///  here was ...
-    if (parameters.version_nmredata>1.0) {
-        end_of_line = "\\\n";
-    } else {
-        end_of_line = "\n";
-    }
+    
     
     if (aAssignmentReporter !== undefined) {
         for (i = 0; i < aAssignmentReporter.fCorrelations.length; i++) {
@@ -546,11 +728,11 @@ AssignmentReporter.assignmentReport = function (parameters) {
                 if (debug_assignment_tag){
                     
                     stream.write(";                                       a:");
-                    stream.write(atomRow + end_of_line);
+                    stream.writeln(atomRow);
                 }
                 
                 if ( nmredataLine !== ""){
-                    stream.write(nmredataLine + end_of_line);
+                    stream.writeln(nmredataLine);
                 }
                 stream.flush();
             }
@@ -647,11 +829,11 @@ AssignmentReporter.assignmentReport = function (parameters) {
                     if (debug_assignment_tag){
                         
                         stream.write(";                                       b:");
-                        stream.write(atomRow + end_of_line);
+                        stream.writeln(atomRow);
                     }
                     
                     if ( nmredataLine !== ""){
-                        stream.write(nmredataLine + end_of_line);
+                        stream.writeln(nmredataLine);
                     }
                     stream.flush();
                 }
@@ -697,10 +879,10 @@ AssignmentReporter.assignmentReport = function (parameters) {
                                 if (debug_assignment_tag){
                                     
                                     stream.write(";                                       c:");
-                                    stream.write(atomRow + end_of_line);
+                                    stream.writeln(atomRow);
                                 }
                                 
-                                stream.write(nmredataLine + end_of_line);
+                                stream.writeln(nmredataLine);
                                 stream.flush();
                             }
                         }
@@ -722,7 +904,7 @@ AssignmentReporter.assignmentReport = function (parameters) {
             stream.writeln("");
             // stream.writeln("");
             stream.writeln(">  <DEBUG_1D_1H_NOTOK>");
-            stream.write(";not satisfactory..." + end_of_line);
+            stream.writeln(";not satisfactory...");
             //	stream.write(lich[ii]); could be used to sort....
             for (ii = 0; ii < counth; ii++) {
                 stream.writeln(lith[ii]);
@@ -731,7 +913,7 @@ AssignmentReporter.assignmentReport = function (parameters) {
             stream.writeln("");
             //  stream.writeln("");
             stream.writeln(">  <DEBUG_1D_13C_NOTOK>");
-            stream.write(";not satisfactory..." + end_of_line);
+            stream.writeln(";not satisfactory...");
             //	stream.write(licc[ii]); could be used to sort....
             for (ii = 0; ii < countc; ii++) {
                 stream.writeln(litc[ii]);
@@ -758,7 +940,6 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
     'use strict';
     
     var i, at, noEqHs, hIndex, atomRow, h, c, shift, atomLabel, element, correlations,
-    end_of_line ,
     aAssignmentObject = parameters.assignmentObject,
     aMolecule = parameters.molecule,
     aAssignmentReporter = parameters.reporter,
@@ -795,11 +976,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
     }
     
     tableRows.header = headerRow;
-    if (parameters.version_nmredata>1.0) {
-        end_of_line = "\\\n";
-    } else {
-        end_of_line = "\n";
-    }
+
     if (aAssignmentReporter !== undefined) {
         stream.flush();
         //initialize output
@@ -885,12 +1062,12 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
             
             if ((spectrum.dimCount === 1) || (keep_type !== "")){
                 
-                nmredata_header[looop_over_spectra] += "Larmor=" + spectrum.frequency(spectrum.dimCount)  + end_of_line;
-                if (spectrum.dimCount === 2) { nmredata_header[looop_over_spectra] += "CorrType=" + keep_type  + end_of_line; }
+                nmredata_header[looop_over_spectra] += "Larmor=" + spectrum.frequency(spectrum.dimCount) + "\n";
+                if (spectrum.dimCount === 2) { nmredata_header[looop_over_spectra] += "CorrType=" + keep_type + "\n"; }
                 //   nmredata[looop_over_spectra] += "MnovaType=" + spectrum.experimentType + " ;optional\n";
                 //   nmredata[looop_over_spectra] += "MnovaSpecCount=" + spectrum.specCount + " ;optional\n";
                 //   nmredata[looop_over_spectra] += "OriginalFormat=" + spectrum.originalFormat + " ;optional in V1\n";
-                nmredata_header[looop_over_spectra] += "Pulseprogram=" + spectrum.getParam("Pulse Sequence") + " ;optional in V1" + end_of_line;
+                nmredata_header[looop_over_spectra] += "Pulseprogram=" + spectrum.getParam("Pulse Sequence") + " ;optional in V1\n";
                 //     nmredata[looop_over_spectra] += "Spectrum_Location_absolute=file:" + spectrum.getParam("Data File Name") + " ;optional (what is required is the file pointer relative to base of the NMR record)\n";
             }
             
@@ -1023,7 +1200,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                             
                             
                             if (mul.find(",",0) > 0) {
-                                nmredata[looop_over_spectra] +=  mul + "; found multiplet by chemical shift " + end_of_line;
+                                nmredata[looop_over_spectra] +=  mul + "; found multiplet by chemical shift \n";
                             }else{
                                 
                                 /// here serach for multiplet assigned to this...
@@ -1060,7 +1237,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                                     nmredata[looop_over_spectra] +=  "," ;//DJ_DEBUG
                                                 }
                                             }
-                                            nmredata[looop_over_spectra] +=  "; found multiplet by label chem shifts differ by " + Number(mul- multi.at(ii).delta).toFixed(6) + " ppm"  + end_of_line;//DJ_DEBUG
+                                            nmredata[looop_over_spectra] +=  "; found multiplet by label chem shifts differ by " + Number(mul- multi.at(ii).delta).toFixed(6) + " ppm\n";//DJ_DEBUG
                                             
                                         }
                                     }
@@ -1133,7 +1310,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                         
                                         nmredata[looop_over_spectra] +=  ";errcs=" + smallest_cs.toFixed(6) + " ppm (This is how far this peak is from the assigned resonance)"  ;
                                         
-                                        nmredata[looop_over_spectra] +=   end_of_line ;
+                                        nmredata[looop_over_spectra] +=  "\n" ;
                                         if (debug){
                                             nmredata[looop_over_spectra] +=  " 13Cmul <" + tmpll.c13Multiplicity  + ">";
                                             nmredata[looop_over_spectra] +=  " flagtostring() <" + tmpll.flagsToString()  + ">";//peak.compoundLabel(spec.solvent)
@@ -1143,7 +1320,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                             nmredata[looop_over_spectra] +=  " distance... <" + smallest_cs  + ">";
                                             nmredata[looop_over_spectra] += separ + "w=" + tmpll.width(0)  ;
                                             nmredata[looop_over_spectra] += separ + "v*larmor=" + tmpll.width(0)*spectrum.frequency(spectrum.dimCount)  ;
-                                            nmredata[looop_over_spectra] +=   end_of_line ;
+                                            nmredata[looop_over_spectra] +=  "\n" ;
                                         }
                                     }
                                 }// too
@@ -1156,9 +1333,9 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                     }
                                     nmredata[looop_over_spectra] += "; found 1) no multiplet at this EXACT chem shift or  label 2) no peak +/-" + max_delta_chemshift_for_peak_to_be_assigned_to_chemical_shift + " pmm in peak list";
                                     if (smallest_cs<10000){
-                                        nmredata[looop_over_spectra] += " (smallest:" + smallest_cs.toFixed(6) + ")"  + end_of_line;
+                                        nmredata[looop_over_spectra] += " (smallest:" + smallest_cs.toFixed(6) + ")\n" ;
                                     }else{
-                                        nmredata[looop_over_spectra] +=  end_of_line ;
+                                        nmredata[looop_over_spectra] += "\n" ;
                                         
                                     }
                                     
@@ -1175,7 +1352,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                     nmredata[looop_over_spectra] +=   "CS 1:" + shift[1].max.toFixed(4) + "-" + shift[1].min.toFixed(4) ;//.toFixed(4); .DJ_DEBUG
                                     
                                 }
-                                nmredata[looop_over_spectra] +=   end_of_line;
+                                nmredata[looop_over_spectra] +=  "\n";
                                 
                             }
                         }
@@ -1277,7 +1454,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                     //shiftH = Number((shift[0].max + shift[0].min) / 2).toFixed(4);
                                     shifts.push(shiftH);
                                 }
-                                if (debug)      nmredata[looop_over_spectra] +=  end_of_line;//.toFixed(4);//DJ_DEBUG
+                                if (debug)      nmredata[looop_over_spectra] += "\n";//.toFixed(4);//DJ_DEBUG
                                 
                                 /*
                                  atomNH = aAssignmentReporter.nucleids[atomRow[0] + "_" + shift];
@@ -1369,7 +1546,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                                             nmredata[looop_over_spectra] +=  "," ;//DJ_DEBUG
                                                         }
                                                     }
-                                                    nmredata[looop_over_spectra] +=  "; found H multiplet by label chem shifts differ by " + Number(chem_shift- multi.at(ii).delta).toFixed(6) + " ppm" + end_of_line;//DJ_DEBUG
+                                                    nmredata[looop_over_spectra] +=  "; found H multiplet by label chem shifts differ by " + Number(chem_shift- multi.at(ii).delta).toFixed(6) + " ppm\n";//DJ_DEBUG
                                                 }
                                             }
                                         }
@@ -1378,7 +1555,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                     if (found_sih === 0){// still not found... write comment...
                                         
                                         
-                                        nmredata[looop_over_spectra] += ";" + shiftH + ", L="  + "H" + atomLabel + ";found no H multiplet for this H" + end_of_line;//.toFixed(4);//DJ_DEBUG
+                                        nmredata[looop_over_spectra] += ";" + shiftH + ", L="  + "H" + atomLabel + ";found no H multiplet for this H\n";//.toFixed(4);//DJ_DEBUG
                                         
                                     }
                                     
@@ -1386,7 +1563,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                     
                                     
                                 }else{
-                                    nmredata[looop_over_spectra] +=  mul + "; found multiplet for this H Will remove..." + end_of_line;//.toFixed(4);//DJ_DEBUG
+                                    nmredata[looop_over_spectra] +=  mul + "; found multiplet for this H Will remove...\n";//.toFixed(4);//DJ_DEBUG
                                     found_sih=1;
                                 }
                                 
@@ -1442,7 +1619,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                             }
                         }
                         
-                        nmredata[looop_over_spectra] +=  "; HERE " + end_of_line;//DJ_DEBUG
+                        nmredata[looop_over_spectra] +=  "; HERE \n";//DJ_DEBUG
                     };
                     ii++;
                 }
@@ -1486,8 +1663,8 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                 for (lo=path_elements.length-5 ; lo <=path_elements.length-2 ; lo ++) {
                     rel_path +=  path_elements[lo]  + seppath;
                 }
-                nmredata_header[looop_over_spectra] += "Spectrum_Location=file:" + rel_path + end_of_line;
-                nmredata_header[looop_over_spectra] += "zip_file_Location=https://www.dropbox.com/sh/ma8v25g15wylfj4/AAA4xWi5w9yQv5RBLr6oDHila?dl=0"  + end_of_line;
+                nmredata_header[looop_over_spectra] += "Spectrum_Location=file:" + rel_path + "\n";
+                nmredata_header[looop_over_spectra] += "zip_file_Location=https://www.dropbox.com/sh/ma8v25g15wylfj4/AAA4xWi5w9yQv5RBLr6oDHila?dl=0\n";
                 
                 //prepare script to prepare NMR record:
                 /*   nmredata[looop_over_spectra] += ";UNIX_CREATE mkdir -p \"" + path_elements[path_elements.length-5]  + "\"\n";
@@ -1591,7 +1768,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                         correlations = AssignmentReporter.correlationToString(aAssignmentObject, aMolecule, aProtonDecimals, aCarbonDecimals, at, h, aAssignmentReporter.fCorrelations[c], aFormat);
                         if (aAssignmentReporter.fCorrelationsDescription[i] === undefined && at === 1){
                             if (debug){
-                            stream.writeln (";INFO_DEBUG 2D correlation found ... reporter # " + c + "type " + aAssignmentReporter.fCorrelationsDescription[i] + " extracted for atom 1: " + correlations  + end_of_line);
+                            stream.writeln (";INFO_DEBUG 2D correlation found ... reporter # " + c + "type " + aAssignmentReporter.fCorrelationsDescription[i] + " extracted for atom 1: " + correlations +  "\n");
                             }
                         }
                         if (debug){
@@ -1633,7 +1810,7 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
                                         nmredata[item_position[c]] += "b" ;// issue replace...
                                     }
                                 }
-                                nmredata[item_position[c]] +=  end_of_line;
+                                nmredata[item_position[c]] += "\n";
                             }
                         }
                         atomRow.push(correlations);
@@ -1693,6 +1870,166 @@ AssignmentReporter.assignmentReportWithCorrelations = function (parameters) {
     return tableRows;
 };
 
+
+
+AssignmentReporter.removeVoidAssignmentsRows = function (table, lastxNuclidesIndex) {
+    "use strict";
+    var i, j,
+    counter = {},
+    newTable = [];
+    
+    for (i = 1; i < table.length; i++) {
+        
+        
+        for (j = 1; j <= lastxNuclidesIndex; j++) {
+            if (table[i][j] !== "") {
+                counter[i] = true;
+            }
+            
+        }
+    }
+    
+    newTable.push(table[0]);
+    for (i = 0; i < table.length; i++) {
+        if (counter[i]) {
+            newTable.push(table[i]);
+        }
+    }
+    
+    return newTable;
+};
+
+
+AssignmentReporter.removeVoidCorrelationsRows = function (table, startOfCorrelations) {
+    "use strict";
+    var i, j,
+    counter = {},
+    newTable = [];
+    
+    
+    for (i = 1; i < table.length; i++) {
+        for (j = parseInt(startOfCorrelations + 1, 10); j < table[i].length; j++) {
+            if (table[i][j] !== "") {
+                counter[i] = true;
+            }
+        }
+    }
+    
+    newTable.push(table[0]);
+    for (i = 0; i < table.length; i++) {
+        if (counter[i]) {
+            newTable.push(table[i]);
+        }
+    }
+    
+    return newTable;
+};
+
+AssignmentReporter.removeVoidColumns = function (table) {
+    "use strict";
+    
+    var i, j, row,
+    counter = [],
+    newTable = [];
+    
+    for (i = 0; i < table[0].length; i++) {
+        counter.push(0);
+    }
+    
+    for (i = 1; i < table.length; i++) {
+        for (j = 0; j < table[0].length; j++) {
+            if (table[i][j] !== "" && table[i][j] !== undefined && table[i][j] !== "-") {
+                counter[j]++;
+            }
+        }
+    }
+    
+    for (i = 0; i < table.length; i++) {
+        row = [];
+        for (j = 0; j < counter.length; j++) {
+            if (counter[j] !== 0) {
+                row.push(table[i][j]);
+            }
+        }
+        newTable.push(row);
+    }
+    return newTable;
+};
+
+AssignmentReporter.getFinalTable =  function (firstTable, secondTable) {
+    "use strict";
+    
+    var i, j, joinedTable = [], aux = [];
+    
+    if (secondTable) {
+        joinedTable.push(firstTable.header.concat(secondTable.header));
+        for (i = 0; i < secondTable.header.length; i++) {
+            aux.push("");
+        }
+    } else {
+        joinedTable.push(firstTable.header);
+    }
+    
+    for (i in firstTable) {
+        if (firstTable.hasOwnProperty(i) && i !== "header") {
+            for (j = 0; j < firstTable.header.length; j++) {
+                if (firstTable[i][j] === undefined) {
+                    firstTable[i][j] = "";
+                }
+            }
+            
+            if (secondTable) {
+                if (secondTable[i]) {
+                    joinedTable.push(firstTable[i].concat(secondTable[i].slice(1)));
+                } else {
+                    joinedTable.push(firstTable[i].concat(aux));
+                }
+            } else {
+                joinedTable.push(firstTable[i]);
+            }
+        }
+    }
+    
+    return joinedTable;
+};
+
+
+AssignmentReporter.getOrderedTable =  function (tableRows) {
+    'use strict';
+    
+    var i, k, a, b, temp,
+    len = tableRows.length - 1;
+    
+    for (i = 1; i < len; i++) {
+        for (k = 1; k < len; k++) {
+            a = parseFloat(tableRows[k][1]);
+            b = parseFloat(tableRows[k + 1][1]);
+            if (isNaN(a)) {
+                a = 0;
+            }
+            if (isNaN(b)) {
+                b = 0;
+            }
+            if (a < b) {
+                temp = tableRows[k + 1];
+                tableRows[k + 1] = tableRows[k];
+                tableRows[k] = temp;
+            }
+        }
+    }
+    return tableRows;
+};
+
+AssignmentReporter.getPpmArray =  function (table) {
+    'use strict';
+    var i,
+    ppmArray = [];
+    
+    for (i = 1; i < table.length; i++) {
+        ppmArray[i] = table[i][1];
+    }
+    return ppmArray;
+};
 
 AssignmentReporter.findInformation = function (decimals, multiplets, shifts, atomNH, addNumberOfNuclides, addMultiplicity, labeldj) {
     'use strict';
@@ -1850,6 +2187,153 @@ AssignmentReporter.correlationToString = function (assignObject, aMolecule, prot
     }
     return corrString;
 };
+
+AssignmentReporter.findMultiplicity = function (decimals, multi, shift) {
+    'use strict';
+    
+    function greaterThan(a, b) {
+        return b - a;
+    }
+    
+    var js, jArray, j,
+    i = 0,
+    found = false,
+    multiplicity = "";
+    
+    while (i < multi.count && !found) {
+        if (multi.at(i).delta.toFixed(decimals) === shift) {
+            found = true;
+            multiplicity = multi.at(i).category.toLowerCase();
+            if (multiplicity !== "m" && multiplicity !== "s") {
+                js = multi.at(i).jList();
+                multiplicity += ",<i>J</i>=";
+                jArray = [];
+                for (j = 0; j < js.length; j++) {
+                    jArray[j] = js.at(j).toFixed(decimals);
+                }
+                
+                jArray.sort(greaterThan); //sort descending
+                
+                for (j = 0; j < jArray.length; j++) {
+                    if (j === 0) {
+                        multiplicity += jArray[j];
+                    } else {
+                        multiplicity += "," + jArray[j];
+                    }
+                }
+                multiplicity += " Hz";
+            }
+        } else {
+            i++;
+        }
+    }
+    return multiplicity;
+};
+
+
+AssignmentReporter.assignmentReportCorrelations = function (decimals, aAssignmentObject, aMolecule, aAssignmentReporter, aMulti) {
+    'use strict';
+    
+    //Deprecated
+    
+    var i, at, noEqHs, hIndex, atomLabel, atomRow, h, shift, hIsHeavyIndex, skip, shiftH, shiftH0, shiftH1, element,
+    aCount = aMolecule.atomCount,
+    tableRows = {},
+    headerRow = [];
+    
+    if (aAssignmentReporter !== undefined) {
+        for (i = 0; i < aAssignmentReporter.fCorrelations.length; i++) {
+            headerRow.push(aAssignmentReporter.fCorrelationsDescription[i]);
+        }
+    }
+    tableRows.header = headerRow;
+    
+    for (at = 1; at <= aCount; at++) {
+        noEqHs = aAssignmentObject.notEqHs(at);
+        skip = true;
+        hIsHeavyIndex = false;
+        atomLabel = aMolecule.atom(at).number;
+        element = aMolecule.atom(at).elementSymbol;
+        
+        //  if (noEqHs.length === 0  && element === "C") {
+        if (noEqHs.length === 0  ) {
+            atomRow = [];
+            atomRow[0] = AssignmentReporter.atomIndexToString(atomLabel, at);
+            atomRow[1] = "";
+            atomRow[2] = AssignmentReporter.findMultiplicity(decimals, aMulti, atomRow[1]);
+            shift =  aAssignmentObject.chemShiftArr(at);
+            if (shift) {
+                if (shift[1]) {
+                    shiftH0 = Number((shift[0].max + shift[0].min) / 2).toFixed(decimals);
+                    shiftH1 = Number((shift[1].max + shift[1].min) / 2).toFixed(decimals);
+                    atomRow[3] = shiftH0 + "," + shiftH1;
+                } else {
+                    atomRow[3] = Number((shift[0].max + shift[0].min) / 2).toFixed(decimals);
+                }
+            } else {
+                atomRow[3] = "";
+            }
+            tableRows[atomRow[0]] = atomRow;
+        } else {
+            
+            for (hIndex = 0; hIndex < noEqHs.length; hIndex++) {
+                atomRow = [];
+                atomRow[0] = AssignmentReporter.atomIndexToString(atomLabel, at);
+                atomRow[1] = "";
+                atomRow[2] = "";
+                h = noEqHs[hIndex];
+                if (h === 0) {
+                    hIsHeavyIndex = true;//H not attached to any C
+                }
+                shift =  aAssignmentObject.chemShiftArr(at, h);
+                
+                if (shift) {
+                    if (noEqHs.length > 1) {
+                        atomRow[0] = AssignmentReporter.atomIndexToString(atomLabel, at, h, true);
+                    } else if (noEqHs.length > 0) {
+                        atomRow[0] = AssignmentReporter.atomIndexToString(atomLabel, at, h, false);
+                    }
+                    skip = false;
+                    
+                    if (shift[1]) {
+                        shiftH0 = Number((shift[0].max + shift[0].min) / 2).toFixed(decimals);
+                        shiftH1 = Number((shift[1].max + shift[1].min) / 2).toFixed(decimals);
+                        atomRow[1] = shiftH0 + "," + shiftH1;
+                        
+                    } else {
+                        shiftH = Number((shift[0].max + shift[0].min) / 2).toFixed(decimals);
+                        if (atomRow[1] !== "") {
+                            shiftH = "," + shiftH;
+                            atomRow[1] += shiftH;
+                        } else {
+                            atomRow[1] = shiftH;
+                        }
+                    }
+                }
+                atomRow[2] = AssignmentReporter.findMultiplicity(decimals, aMulti, atomRow[1]);
+                shift =  aAssignmentObject.chemShiftArr(at);
+                //   if (!hIsHeavyIndex && shift && element === "C") {
+                if (!hIsHeavyIndex && shift ) {
+                    skip = false;
+                    
+                    if (shift[1]) {
+                        shiftH0 = Number((shift[0].max + shift[0].min) / 2).toFixed(decimals);
+                        shiftH1 = Number((shift[1].max + shift[1].min) / 2).toFixed(decimals);
+                        atomRow[3] = shiftH0 + "," + shiftH1;
+                    } else {
+                        atomRow[3] = Number((shift[0].max + shift[0].min) / 2).toFixed(decimals);
+                    }
+                } else {
+                    atomRow[3] = "";
+                }
+                
+                tableRows[atomRow[0]] = atomRow;
+            }
+        }
+    }
+    return tableRows;
+};
+
 
 
 

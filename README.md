@@ -1,6 +1,6 @@
 # Mnova_export_script
 This script, based on existing Mnova script, was developped by Damien Jeannerat
-It works on the mac version of Mnova 11
+It works on the mac version of Mnova 11.
 
 ### Installation:
 Download and unzip the repository.
